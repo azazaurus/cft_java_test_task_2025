@@ -11,7 +11,6 @@ public class FloatStatisticsCalculator extends StatisticsBaseTypeCalculator {
     private BigDecimal minValue;
     private BigDecimal elementsSum = BigDecimal.ZERO;
     private BigDecimal averageValue;
-    private final int ROUNDING_SCALE = 5;
 
     @Override
     public void calculate(String line) {
@@ -34,10 +33,10 @@ public class FloatStatisticsCalculator extends StatisticsBaseTypeCalculator {
 
     @Override
     public void finalizeCalculation() {
-        averageValue = elementsSum.divide(new BigDecimal(getFilteredElementsCount()), ROUNDING_SCALE, RoundingMode.HALF_UP);
+        averageValue = elementsSum.divide(new BigDecimal(getFilteredElementsCount()), RoundingMode.HALF_UP);
     }
 
     public FloatReport report() {
-        return new FloatReport(super.getFilteredElementsCount(), maxValue, minValue, elementsSum, averageValue, ROUNDING_SCALE);
+        return new FloatReport(super.getFilteredElementsCount(), maxValue, minValue, elementsSum, averageValue);
     }
 }

@@ -9,14 +9,12 @@ public class FloatReport {
     public final BigDecimal minValue;
     public final BigDecimal elementsSum;
     public final BigDecimal averageValue;
-    public final int roundingScale;
 
-    public FloatReport(BigInteger elementsCount, BigDecimal maxValue, BigDecimal minValue, BigDecimal elementsSum, BigDecimal averageValue, int roundingScale) {
+    public FloatReport(BigInteger elementsCount, BigDecimal maxValue, BigDecimal minValue, BigDecimal elementsSum, BigDecimal averageValue) {
         this.filteredElementsCount = elementsCount;
         this.maxValue = maxValue;
         this.minValue = minValue;
         this.elementsSum = elementsSum;
         this.averageValue = averageValue;
-        this.roundingScale = roundingScale;
     }
 }
