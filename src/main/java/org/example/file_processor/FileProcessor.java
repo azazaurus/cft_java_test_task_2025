@@ -1,18 +1,33 @@
-package org.example;
+package org.example.file_processor;
+
+import org.example.Lazy;
+import org.example.reports.Report;
+import org.example.Type;
+import org.example.statistic_calculators.FullStatisticsCalculator;
+import org.example.statistic_calculators.NoopStatisticsCalculator;
+import org.example.statistic_calculators.ShortStatisticsCalculator;
+import org.example.statistic_calculators.StatisticsCalculator;
 
 import java.io.*;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
 public class FileProcessor implements AutoCloseable{
-    FileProcessorParameters parameters;
+    private FileProcessorParameters parameters;
     private final Pattern integersRegex = Pattern.compile("^[+-]?[0-9]+$");
     private final Pattern floatsRegex = Pattern.compile("[+-]?(\\d+([.]\\d*)?([eE][+-]?\\d+)?|[.]\\d+([eE][+-]?\\d+)?)");
-    HashMap<Type, Lazy<BufferedWriter>> bufferedWritersLinks = new HashMap<>();
+    private HashMap<Type, Lazy<BufferedWriter>> bufferedWritersLinks = new HashMap<>();
+    private StatisticsCalculator statisticsCalculator;
     //TODO: Как и куда добавить инициализацию переменной ниже
 
-    FileProcessor(FileProcessorParameters parameters) throws IOException {
+    public FileProcessor(FileProcessorParameters parameters) throws IOException {
         this.parameters = parameters;
+        if (parameters.isStatisticsOn ) {
+            statisticsCalculator = parameters.isStatisticsFullMode? new FullStatisticsCalculator() : new ShortStatisticsCalculator();
+        }
+        else {
+            statisticsCalculator = new NoopStatisticsCalculator();
+        }
         createBufferedWriterAndPutItIntoHashmapIfNotNull(Type.Float, parameters.path.resolve( parameters.prefix + parameters.fileNameForFloats).toString());
         createBufferedWriterAndPutItIntoHashmapIfNotNull(Type.Integer, parameters.path.resolve( parameters.prefix + parameters.fileNameForIntegers).toString());
         createBufferedWriterAndPutItIntoHashmapIfNotNull(Type.String, parameters.path.resolve( parameters.prefix + parameters.fileNameForStrings).toString());
@@ -20,17 +35,23 @@ public class FileProcessor implements AutoCloseable{
 
     //TODO: возможно стоит возвращать результат работы метода, успешно ли смог выполнится или нет
     public void processFile(String filePath) {
+
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(filePath))) {
 
             String line;
             while ((line = bufferedReader.readLine()) != null ) {
-                Enum<Type> type = tryParse(line);
+                Type type = tryParse(line);
                 processWriting(type, line);
+                statisticsCalculator.count(line, type);
             }
         } catch (IOException e) {
 
             //TODO: обработать ошибки
         }
+    }
+
+    public Report reportStatistics() {
+        return statisticsCalculator.reportStatistics();
     }
 
     private void processWriting(Enum<Type> stringType,
@@ -59,7 +80,7 @@ public class FileProcessor implements AutoCloseable{
         return integersRegex.matcher(input).matches();
     }
 
-    private Enum<Type> tryParse(String input) {
+    private Type tryParse(String input) {
         if (isInteger(input)) {
             return Type.Integer;
         }
@@ -90,11 +111,5 @@ public class FileProcessor implements AutoCloseable{
             tempWriter = null;
         }
         return tempWriter;
-    }
-
-    enum Type{
-        Integer,
-        Float,
-        String
     }
 }

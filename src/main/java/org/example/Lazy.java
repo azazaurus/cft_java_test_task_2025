@@ -12,6 +12,10 @@ public class Lazy<T> {
         this.factory = factory;
     }
 
+    public boolean isInitialized() {
+        return isInitialized;
+    }
+
     public T get() {
         if (!isInitialized) {
             value = factory.get();
