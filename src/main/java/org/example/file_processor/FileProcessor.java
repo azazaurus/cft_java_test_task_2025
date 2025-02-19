@@ -96,7 +96,9 @@ public class FileProcessor implements AutoCloseable{
     public void close() {
         for (Lazy<BufferedWriter> bufferedWriter : bufferedWritersLinks.values()) {
             try {
-                bufferedWriter.get().close();
+                if (bufferedWriter.isInitialized() && bufferedWriter.get() != null) {
+                    bufferedWriter.get().close();
+                }
             } catch (IOException e) {
                 Logger.logError("Unable to close output file");
             }
