@@ -14,7 +14,7 @@ public class FileProcessorParametersBuilder {
     private boolean isStatisticsOn = false;
 
     public void setPath(Path path) {
-        path = Paths.get(path.toUri());
+        this.path = Paths.get(path.toUri());
     }
 
     public void setPrefix(String prefix) {

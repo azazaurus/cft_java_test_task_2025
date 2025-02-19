@@ -17,22 +17,21 @@ import java.util.ArrayList;
 
 public class Main {
     public static void main(String[] args) {
-        ArrayList<String> fullFilesNames = new ArrayList<>();
+        ArrayList<String> inputFilesNames = new ArrayList<>();
         FileProcessorParametersBuilder parametersBuilder = new FileProcessorParametersBuilder();
-        if (args.length == 0) {
-            throw new RuntimeException("");
-        }
 
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("-o")) {
-                if (isValidPath(args[i + 1])) {
+                String path = args[i + 1];
+                if (isValidPath(path)) {
                     parametersBuilder.setPath(Paths.get(args[++i]));
+                }
+                else {
+                    Logger.logError("Invalid output path: " + path);
                 }
             }
             else if (args[i].equals("-p")) {
-                if (isValidPrefix(args[i + 1])) {
-                    parametersBuilder.setPrefix(args[++i]);
-                }
+                parametersBuilder.setPrefix(args[++i]);
             }
             else if (args[i].equals("-a")) {
                 parametersBuilder.setAppend(true);
@@ -45,14 +44,14 @@ public class Main {
                 parametersBuilder.setStatisticsFullMode(true);
             }
             else {
-                fullFilesNames.add(args[i]);
+                inputFilesNames.add(args[i]);
             }
         }
 
         FileProcessorParameters parameters = parametersBuilder.build();
         try (FileProcessor fileProcessor = new FileProcessor(parameters)) {
-            for (int i = 0; i < fullFilesNames.size(); i++) {
-                fileProcessor.processFile(fullFilesNames.get(i));
+            for (String inputFilesName : inputFilesNames) {
+                fileProcessor.processFile(inputFilesName);
             }
 
             if (parameters.isStatisticsOn) {
@@ -64,11 +63,6 @@ public class Main {
                     System.out.print(new ShortReportFormatter().format(report));
 
                 }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -79,9 +73,5 @@ public class Main {
             return false;
         }
         return true;
-    }
-
-    public static boolean isValidPrefix(String prefix) {
-        return prefix.matches("^[^</*?\"\\>:|]+$");
     }
 }

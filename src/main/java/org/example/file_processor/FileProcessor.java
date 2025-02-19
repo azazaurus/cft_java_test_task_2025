@@ -1,6 +1,7 @@
 package org.example.file_processor;
 
 import org.example.Lazy;
+import org.example.Logger;
 import org.example.reports.Report;
 import org.example.Type;
 import org.example.statistic_calculators.FullStatisticsCalculator;
@@ -13,14 +14,14 @@ import java.util.HashMap;
 import java.util.regex.Pattern;
 
 public class FileProcessor implements AutoCloseable{
-    private FileProcessorParameters parameters;
-    private final Pattern integersRegex = Pattern.compile("^[+-]?[0-9]+$");
-    private final Pattern floatsRegex = Pattern.compile("[+-]?(\\d+([.]\\d*)?([eE][+-]?\\d+)?|[.]\\d+([eE][+-]?\\d+)?)");
-    private HashMap<Type, Lazy<BufferedWriter>> bufferedWritersLinks = new HashMap<>();
-    private StatisticsCalculator statisticsCalculator;
-    //TODO: Как и куда добавить инициализацию переменной ниже
+    private static final Pattern integersRegex = Pattern.compile("^[+-]?[0-9]+$");
+    private static final Pattern floatsRegex = Pattern.compile("[+-]?(\\d+([.]\\d*)?([eE][+-]?\\d+)?|[.]\\d+([eE][+-]?\\d+)?)");
 
-    public FileProcessor(FileProcessorParameters parameters) throws IOException {
+    private final FileProcessorParameters parameters;
+    private final HashMap<Type, Lazy<BufferedWriter>> bufferedWritersLinks = new HashMap<>();
+    private final StatisticsCalculator statisticsCalculator;
+
+    public FileProcessor(FileProcessorParameters parameters){
         this.parameters = parameters;
         if (parameters.isStatisticsOn ) {
             statisticsCalculator = parameters.isStatisticsFullMode? new FullStatisticsCalculator() : new ShortStatisticsCalculator();
@@ -33,9 +34,7 @@ public class FileProcessor implements AutoCloseable{
         createBufferedWriterAndPutItIntoHashmapIfNotNull(Type.String, parameters.path.resolve( parameters.prefix + parameters.fileNameForStrings).toString());
     }
 
-    //TODO: возможно стоит возвращать результат работы метода, успешно ли смог выполнится или нет
     public void processFile(String filePath) {
-
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(filePath))) {
 
             String line;
@@ -44,9 +43,10 @@ public class FileProcessor implements AutoCloseable{
                 processWriting(type, line);
                 statisticsCalculator.count(line, type);
             }
+        } catch (FileNotFoundException e) {
+            Logger.logError("Input file not found: " + filePath);
         } catch (IOException e) {
-
-            //TODO: обработать ошибки
+            Logger.logError("Unable to read input file " + filePath);
         }
     }
 
@@ -68,7 +68,7 @@ public class FileProcessor implements AutoCloseable{
             file.write(line);
             file.newLine();
         } catch (IOException e) {
-            //TODO: обработать ошибки
+            Logger.logError("Unable to write to output file");
         }
     }
 
@@ -93,9 +93,13 @@ public class FileProcessor implements AutoCloseable{
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         for (Lazy<BufferedWriter> bufferedWriter : bufferedWritersLinks.values()) {
-            bufferedWriter.get().close();
+            try {
+                bufferedWriter.get().close();
+            } catch (IOException e) {
+                Logger.logError("Unable to close output file");
+            }
         }
     }
 
@@ -108,6 +112,7 @@ public class FileProcessor implements AutoCloseable{
         try {
             tempWriter = new BufferedWriter(new FileWriter(fullFileName, parameters.append));
         } catch (IOException e) {
+            Logger.logError("Unable to create or open output file " + fullFileName);
             tempWriter = null;
         }
         return tempWriter;
