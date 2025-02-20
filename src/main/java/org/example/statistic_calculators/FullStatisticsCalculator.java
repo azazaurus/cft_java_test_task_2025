@@ -28,9 +28,10 @@ public class FullStatisticsCalculator implements StatisticsCalculator {
     }
 
     private void finalizeCalculations() {
-        for (Lazy<StatisticsBaseTypeCalculator> calculator: calculators.values()) {
-            calculator.get().finalizeCalculation();
-        }
+        for (Lazy<StatisticsBaseTypeCalculator> calculator: calculators.values())
+            if (calculator.isInitialized()) {
+                calculator.get().finalizeCalculation();
+            }
     }
 
     @Override
